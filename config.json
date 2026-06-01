@@ -1,0 +1,14 @@
+{
+  "adapters": [
+    {
+      "s_no": 1,
+      "portal": "Find a Tender Service",
+      "url": "https://www.find-tender.service.gov.uk",
+      "frequency": "daily",
+      "type": "OCDS API",
+      "enabled": true,
+      "adapter_id": "Adapter1",
+      "module": "adapters.adapter1.main"
+    }
+  ]
+}

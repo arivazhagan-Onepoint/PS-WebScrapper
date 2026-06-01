@@ -1,0 +1,20 @@
+# Credentials & tokens — never commit
+credentials/credentials.json
+credentials/ps_tender_token.json
+
+# Generated data output
+extract_json/
+target_json/
+adapters/**/extract_json/
+adapters/**/target_json/
+
+# Logs
+*.log
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Claude Code local settings
+.claude/settings.local.json
