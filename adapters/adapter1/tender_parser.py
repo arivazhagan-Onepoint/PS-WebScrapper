@@ -69,7 +69,10 @@ class TenderParser:
 
     def qualify_tender(self, tender_data):
         """
-        Qualification rules (applied last, after all fields are populated):
+        Qualification rules (applied last, after all fields are populated).
+        Returns (status, reason) where status is 'PreQualified' or 'NotQualified'
+        and reason is a human-readable explanation of the decision.
+
           Value/stage rules:
             1. planning stage  + annual value < £1,000,000  → candidate for PreQualified
             2. tender/opportunity stage + annual value < £139,689 → candidate for PreQualified
@@ -91,18 +94,26 @@ class TenderParser:
             except (ValueError, IndexError):
                 annual_val = None
 
-        # Determine whether value/stage rules pass
+        # Determine whether value/stage rules pass and build reason
         if annual_val is None:
             value_qualifies = True
+            reason = "Annual value not available — benefit of the doubt"
         elif 'planning' in stage:
             value_qualifies = annual_val < 1_000_000
+            threshold = '£1,000,000'
+            op = '<' if value_qualifies else '>='
+            reason = f"Planning stage | Annual value {annual_str} {op} {threshold}"
         elif any(kw in stage for kw in ['tender', 'opportunity']):
             value_qualifies = annual_val < 139_689
+            threshold = '£139,689'
+            op = '<' if value_qualifies else '>='
+            reason = f"Tender/Opportunity stage | Annual value {annual_str} {op} {threshold}"
         else:
             value_qualifies = False
+            reason = f"Stage '{stage or 'unknown'}' is not planning/tender/opportunity"
 
         if not value_qualifies:
-            return 'NotQualified'
+            return 'NotQualified', reason
 
         # Due date check — only reached when value/stage rules pass
         due_date_str = (tender_data.get('Due Date') or '').strip()
@@ -111,11 +122,12 @@ class TenderParser:
                 due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
                 due_start, due_end = get_due_date_range()
                 if not (due_start <= due_date <= due_end):
-                    return 'NotQualified'
+                    reason += f" | Due date {due_date_str} outside window [{due_start} – {due_end}]"
+                    return 'NotQualified', reason
             except Exception:
                 pass  # unparseable due date — no penalty
 
-        return 'PreQualified'
+        return 'PreQualified', reason
 
     def _procurement_stage(self, release):
         tags = release.get('tag', [])

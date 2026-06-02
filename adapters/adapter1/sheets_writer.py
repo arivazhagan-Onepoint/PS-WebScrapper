@@ -22,16 +22,24 @@ def _col_letter(n):
 
 LAST_COL = _col_letter(len(DATASET_FIELDS))
 
-# Fields compared between old and new to detect meaningful changes
+# Fields compared between old and new to detect meaningful changes.
+# Tuple format: (dataset field name, short label for comment, max chars or None)
 CHANGE_FIELDS = [
-    ('Status',                'Status'),
-    ('Total Contract Value',  'Value'),
-    ('Contract Duration',     'Duration'),
-    ('Due Date',              'Due'),
-    ('Procurement Stage',     'Stage'),
-    ('Buyer Name',            'Buyer'),
-    ('Annual Contract Value', 'Annual'),
-    ('SC_Flag',               'SC_Flag'),
+    ('Status',                'Status',       None),
+    ('Total Contract Value',  'Value',        None),
+    ('Contract Duration',     'Duration',     None),
+    ('Due Date',              'Due',          None),
+    ('Procurement Stage',     'Stage',        50),
+    ('Buyer Name',            'Buyer',        50),
+    ('Annual Contract Value', 'Annual',       None),
+    ('SC_Flag',               'SC_Flag',      None),
+    ('Name',                  'Name',         60),
+    ('Published On',          'Published',    None),
+    ('CPV Code',              'CPV',          60),
+    ('Suitable for SMEs?',    'SME',          None),
+    ('Country',               'Country',      None),
+    ('Locality',              'Locality',     None),
+    ('Tender Description',    'Description',  80),
 ]
 
 
@@ -272,10 +280,13 @@ class SheetsWriter:
     def _build_update_comment(self, tender, existing_data, ts):
         """Generate a change-diff comment or 'no changes' note for an updated record."""
         changes = []
-        for field, label in CHANGE_FIELDS:
+        for field, label, max_len in CHANGE_FIELDS:
             old = str(existing_data.get(field, '')).strip()
             new = str(tender.get(field, '')).strip()
             if new and old != new:
+                if max_len:
+                    old = (old[:max_len] + '…') if len(old) > max_len else old
+                    new = (new[:max_len] + '…') if len(new) > max_len else new
                 changes.append(f"{label}: {old or '-'} -> {new}")
         if changes:
             return f"[{ts}] Updated | " + " | ".join(changes)
