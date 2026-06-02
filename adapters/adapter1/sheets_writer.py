@@ -39,7 +39,6 @@ CHANGE_FIELDS = [
     ('Suitable for SMEs?',    'SME',          None),
     ('Country',               'Country',      None),
     ('Locality',              'Locality',     None),
-    ('Tender Description',    'Description',  80),
 ]
 
 
