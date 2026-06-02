@@ -22,6 +22,7 @@ PORTAL_URL   = "https://www.find-tender.service.gov.uk/Notice"
 PORTAL_NAME  = "Find-A-Tender"
 
 CPV_CODES = [
+    "48000000",  # Software packages and information systems
     "72000000",  # IT services (parent)
     "72100000",  # Hardware
     "72200000",  # Software
