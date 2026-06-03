@@ -30,6 +30,7 @@ CHANGE_FIELDS = [
     ('Total Contract Value',  'Value',        None),
     ('Contract Duration',     'Duration',     None),
     ('Tender Due Date',        'Due',          None),
+    ('Clarification Due Date', 'ClarDue',      None),
     ('Procurement Stage',     'Stage',        50),
     ('Buyer Name',            'Buyer',        50),
     ('Annual Contract Value', 'Annual',       None),
