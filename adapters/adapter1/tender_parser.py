@@ -1,22 +1,9 @@
-import json
 import logging
-import os
 import re
 from datetime import datetime
 from .config import UK_TIMEZONE, PORTAL_NAME, ADAPTER_ID, get_due_date_range
 
 logger = logging.getLogger(__name__)
-
-# Load CPV descriptions from the project-root reference file
-_CPV_DESC_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'cpv_description.json')
-try:
-    with open(_CPV_DESC_PATH, encoding='utf-8') as _f:
-        _CPV_DESCRIPTIONS = {
-            entry['code']: entry['description']
-            for entry in json.load(_f).get('cpv_codes', [])
-        }
-except Exception:
-    _CPV_DESCRIPTIONS = {}
 
 
 class TenderParser:
@@ -27,6 +14,8 @@ class TenderParser:
             release = summary.get('ocds_release', {})
             tender  = release.get('tender', {})
             direct_url = summary.get('direct_url', '')
+
+            cpv_codes, cpv_descriptions = self._cpv_info(tender)
 
             tender_data = {
                 'Portal Name':           PORTAL_NAME,
@@ -45,14 +34,14 @@ class TenderParser:
                 'Tender Description':    tender.get('description', ''),
                 'Buyer Name':            self._buyer_name(release),
                 'Suitable for SMEs?':    self._sme_flag(tender),
-                'Tender Status':                tender.get('status', ''),
-                'Tender Status Date':           self._status_date(release),
+                'Tender Status':         tender.get('status', ''),
+                'Tender Status Date':    self._status_date(release),
                 'Processed Date':        datetime.now(UK_TIMEZONE).isoformat(),
                 'Comments':              '',  # set below after all fields are known
                 'Last Modified Date':    '',
                 'Created Date':          '',
-                'CPV Code':              self._cpv_codes(tender),
-                'CPV Description':       self._cpv_descriptions(tender),
+                'CPV Code':              cpv_codes,
+                'CPV Description':       cpv_descriptions,
                 'SC_Flag':               'TBD',
                 'Country':               self._country(release),
                 'Locality':              self._locality(release)
@@ -152,36 +141,11 @@ class TenderParser:
             return f"{tag_str} / {initiation}"
         return tag_str or initiation
 
-    def _cpv_codes(self, tender):
-        codes = []
-
-        def _add(cl):
-            if cl.get('scheme') == 'CPV' and cl.get('id'):
-                code = str(cl['id'])
-                if code not in codes:
-                    codes.append(code)
-
-        # tender.classification (top-level)
-        _add(tender.get('classification', {}))
-
-        # tender.items[].classification + additionalClassifications
-        for item in tender.get('items', []):
-            _add(item.get('classification', {}))
-            for ac in item.get('additionalClassifications', []):
-                _add(ac)
-
-        # tender.lots[].items[].classification + additionalClassifications
-        for lot in tender.get('lots', []):
-            for item in lot.get('items', []):
-                _add(item.get('classification', {}))
-                for ac in item.get('additionalClassifications', []):
-                    _add(ac)
-
-        return ', '.join(codes)
-
-    def _cpv_descriptions(self, tender):
-        """Return formatted 'code - description' strings for all CPV codes on the tender."""
+    def _cpv_info(self, tender):
+        """Extract CPV codes and descriptions in a single pass from OCDS classification objects.
+        Returns (codes_str, descriptions_str) — descriptions sourced directly from the release data."""
         seen = set()
+        codes = []
         descriptions = []
 
         def _add(cl):
@@ -189,7 +153,8 @@ class TenderParser:
                 code = str(cl['id'])
                 if code not in seen:
                     seen.add(code)
-                    desc = _CPV_DESCRIPTIONS.get(code, '')
+                    codes.append(code)
+                    desc = cl.get('description', '')
                     descriptions.append(f"{code} - {desc}" if desc else code)
 
         _add(tender.get('classification', {}))
@@ -203,7 +168,7 @@ class TenderParser:
                 for ac in item.get('additionalClassifications', []):
                     _add(ac)
 
-        return ', '.join(descriptions)
+        return ', '.join(codes), ', '.join(descriptions)
 
     def _build_comment(self, td):
         ts = datetime.now(UK_TIMEZONE).strftime('%Y-%m-%d %H:%M')
