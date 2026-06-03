@@ -126,14 +126,14 @@ class TenderScraper:
                 return country in INCLUDED_COUNTRIES
         return False
 
-    def matches_due_date(self, release, due_start, due_end):
-        """Return True if due date falls within the expected range."""
+    def matches_due_date(self, release, due_start):
+        """Return True if due date is on or after due_start (lower bound only)."""
         end_date_str = release.get('tender', {}).get('tenderPeriod', {}).get('endDate', '')
         if not end_date_str:
             return True  # no date available — include it
         try:
             end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00')).date()
-            return due_start <= end_date <= due_end
+            return end_date >= due_start
         except Exception:
             return True
 
@@ -145,13 +145,12 @@ class TenderScraper:
     def scrape(self):
         """Fetch and filter tenders from the FTS OCDS API."""
         pub_start, pub_end = get_publication_date_range()
-        due_start, due_end = get_due_date_range()
+        due_start = get_due_date_range()
 
         logger.info("Search parameters:")
         logger.info(f"  Publication Date From : {pub_start}")
         logger.info(f"  Publication Date To   : {pub_end}")
         logger.info(f"  Due Date From         : {due_start}")
-        logger.info(f"  Due Date To           : {due_end}")
         logger.info(f"  CPV Codes             : {', '.join(CPV_CODES)}")
         logger.info(f"  Suitable for SMEs     : {SUITABLE_FOR_SMES}")
         logger.info(f"  Excluded Statuses     : {', '.join(EXCLUDED_STATUSES)}")
@@ -211,7 +210,7 @@ class TenderScraper:
             #     logger.debug(f"  [SKIP-SME]        {notice_id} | {title}")
             #     continue
 
-            # if not self.matches_due_date(release, due_start, due_end):
+            # if not self.matches_due_date(release, due_start):
             #     filter_counts['due_date'] += 1
             #     logger.debug(f"  [SKIP-DUE-DATE]   {notice_id} | {title}")
             #     continue

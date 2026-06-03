@@ -77,20 +77,9 @@ def get_publication_date_range():
 
 
 def get_due_date_range():
-    """Due date window: 2 – 14 days from today, end rounded forward to the next Saturday."""
+    """Returns due_start: tenders closing in less than 2 days from today are excluded."""
     today = datetime.now(UK_TIMEZONE).date()
-
-    due_start = today + timedelta(days=2)
-    due_end   = today + timedelta(days=14)
-
-    day_of_week = due_end.weekday()
-    if day_of_week != 5:            # 5 = Saturday
-        days_to_saturday = (5 - day_of_week) % 7 or 7
-        due_end += timedelta(days=days_to_saturday)
-
-    #Temporarily relax the due date filter to capture more tenders for testing    
-    due_start = today - timedelta(days=5)
-    return due_start, today
+    return today + timedelta(days=2)
 
 
 # Dataset fields — canonical column order for Google Sheets
