@@ -106,7 +106,6 @@ class SheetsWriter:
                 logger.info(f"Found existing sheet: {self.sheet_id}")
                 self._get_sheet_tab_id()
                 self._ensure_columns_match()
-                self._reorder_columns()
                 self._freeze_header_row()
                 self._update_summary_row()
                 self.load_existing_records()
@@ -256,47 +255,6 @@ class SheetsWriter:
                 ).execute()
             )
             logger.info("Sheet columns updated to match DATASET_FIELDS")
-
-    def _reorder_columns(self):
-        """Move sheet columns to match the DATASET_FIELDS order using moveDimension."""
-        result = self._execute_with_retry(
-            lambda: self.sheets_service.spreadsheets().values().get(
-                spreadsheetId=self.sheet_id,
-                range=f"'{SHEET_NAME}'!2:2"
-            ).execute()
-        )
-        current = result.get('values', [[]])[0] if result.get('values') else []
-
-        requests = []
-        for target_idx, field in enumerate(DATASET_FIELDS):
-            if field not in current:
-                continue
-            current_idx = current.index(field)
-            if current_idx == target_idx:
-                continue
-            requests.append({
-                "moveDimension": {
-                    "source": {
-                        "sheetId": self.sheet_tab_id,
-                        "dimension": "COLUMNS",
-                        "startIndex": current_idx,
-                        "endIndex": current_idx + 1
-                    },
-                    "destinationIndex": target_idx
-                }
-            })
-            current.pop(current_idx)
-            current.insert(target_idx, field)
-            logger.info(f"Queued column move: '{field}' col {current_idx + 1} -> {target_idx + 1}")
-
-        if requests:
-            self._execute_with_retry(
-                lambda: self.sheets_service.spreadsheets().batchUpdate(
-                    spreadsheetId=self.sheet_id,
-                    body={"requests": requests}
-                ).execute()
-            )
-            logger.info(f"Reordered {len(requests)} column(s) to match DATASET_FIELDS")
 
     def move_sheet_to_folder(self, sheet_id):
         """Move sheet to target folder."""
