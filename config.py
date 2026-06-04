@@ -79,7 +79,7 @@ def get_publication_date_range():
 def get_due_date_range():
     """Returns due_start: tenders closing in less than 2 days from today are excluded."""
     today = datetime.now(UK_TIMEZONE).date()
-    return today + timedelta(days=2)
+    return today + timedelta(days=5)
 
 
 # Dataset fields — canonical column order for Google Sheets
@@ -100,15 +100,15 @@ DATASET_FIELDS = [
     "Tender Description",
     "Buyer Name",
     "CPV Code",
+    "CPV Description",
     "SC_Flag",
     "Country",
     "Locality",
     "Suitable for SMEs?",
     "Tender Status",
     "Tender Status Date",
-    "Processed Date",
     "Comments",
-    "CPV Description",
+    "Processed Date",
     "Last Modified Date",
     "Created Date",
 ]
