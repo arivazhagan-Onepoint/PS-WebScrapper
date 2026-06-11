@@ -37,8 +37,25 @@ class TenderScraper:
                 try:
                     return response.json()
                 except ValueError as e:
-                    logger.error(f"Malformed JSON from API (not retrying): {e}")
-                    logger.error(f"Raw response snippet: {response.text[:500]}")
+                    raw = response.text
+                    # Save full response to file for offline inspection
+                    debug_dir = os.path.join(BASE_DIR, 'extract_json')
+                    os.makedirs(debug_dir, exist_ok=True)
+                    ts = datetime.now(UK_TIMEZONE).strftime('%Y%m%d_%H%M%S')
+                    debug_path = os.path.join(debug_dir, f"malformed_{ts}.txt")
+                    with open(debug_path, 'w', encoding='utf-8') as f:
+                        f.write(raw)
+                    # Extract context around the error position from the exception message
+                    import re as _re
+                    m = _re.search(r'char (\d+)', str(e))
+                    if m:
+                        pos = int(m.group(1))
+                        snippet = raw[max(0, pos - 200): pos + 200]
+                        logger.error(f"Malformed JSON from API (char {pos}): {e}")
+                        logger.error(f"Context around error (char {pos}):\n{snippet}")
+                    else:
+                        logger.error(f"Malformed JSON from API: {e}")
+                    logger.error(f"Full response saved to: {debug_path}")
                     return None
             except requests.RequestException as e:
                 logger.error(f"API request failed: {e}")
