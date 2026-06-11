@@ -39,6 +39,14 @@ class TenderScraper:
                     return response.json()
                 except ValueError as e:
                     raw = response.text
+                    # Always save raw response for future troubleshooting
+                    debug_dir = os.path.join(BASE_DIR, 'extract_json')
+                    os.makedirs(debug_dir, exist_ok=True)
+                    ts = datetime.now(UK_TIMEZONE).strftime('%Y%m%d_%H%M%S')
+                    debug_path = os.path.join(debug_dir, f"malformed_{ts}.txt")
+                    with open(debug_path, 'w', encoding='utf-8') as f:
+                        f.write(raw)
+                    logger.warning(f"Malformed JSON saved to: {debug_path}")
                     # Attempt targeted repair: leading zeros on decimal numbers (e.g. 00.00 → 0.00)
                     repaired = re.sub(r'(:\s*)0{2,}(\.\d+)', r'\g<1>0\2', raw)
                     if repaired != raw:
@@ -48,13 +56,6 @@ class TenderScraper:
                             return data
                         except ValueError:
                             pass  # repair didn't fully fix it — fall through to diagnostics
-                    # Save full response to file for offline inspection
-                    debug_dir = os.path.join(BASE_DIR, 'extract_json')
-                    os.makedirs(debug_dir, exist_ok=True)
-                    ts = datetime.now(UK_TIMEZONE).strftime('%Y%m%d_%H%M%S')
-                    debug_path = os.path.join(debug_dir, f"malformed_{ts}.txt")
-                    with open(debug_path, 'w', encoding='utf-8') as f:
-                        f.write(raw)
                     m = re.search(r'char (\d+)', str(e))
                     if m:
                         pos = int(m.group(1))
@@ -63,7 +64,6 @@ class TenderScraper:
                         logger.error(f"Context around error (char {pos}):\n{snippet}")
                     else:
                         logger.error(f"Malformed JSON from API: {e}")
-                    logger.error(f"Full response saved to: {debug_path}")
                     return None
             except requests.RequestException as e:
                 logger.error(f"API request failed: {e}")
