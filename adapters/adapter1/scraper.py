@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import time
 import requests
 from .config import (
@@ -38,6 +39,15 @@ class TenderScraper:
                     return response.json()
                 except ValueError as e:
                     raw = response.text
+                    # Attempt targeted repair: leading zeros on decimal numbers (e.g. 00.00 → 0.00)
+                    repaired = re.sub(r'(:\s*)0{2,}(\.\d+)', r'\g<1>0\2', raw)
+                    if repaired != raw:
+                        try:
+                            data = json.loads(repaired)
+                            logger.warning(f"JSON repaired (leading zeros on decimals) for: {url}")
+                            return data
+                        except ValueError:
+                            pass  # repair didn't fully fix it — fall through to diagnostics
                     # Save full response to file for offline inspection
                     debug_dir = os.path.join(BASE_DIR, 'extract_json')
                     os.makedirs(debug_dir, exist_ok=True)
@@ -45,9 +55,7 @@ class TenderScraper:
                     debug_path = os.path.join(debug_dir, f"malformed_{ts}.txt")
                     with open(debug_path, 'w', encoding='utf-8') as f:
                         f.write(raw)
-                    # Extract context around the error position from the exception message
-                    import re as _re
-                    m = _re.search(r'char (\d+)', str(e))
+                    m = re.search(r'char (\d+)', str(e))
                     if m:
                         pos = int(m.group(1))
                         snippet = raw[max(0, pos - 200): pos + 200]
