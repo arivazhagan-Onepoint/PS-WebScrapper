@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 import pytz
+import holidays
 
 # Paths
 BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
@@ -78,9 +79,16 @@ def get_publication_date_range():
 
 
 def get_due_date_range():
-    """Returns due_start: tenders closing in less than 2 days from today are excluded."""
+    """Returns due_start: tenders closing within 5 UK working days from today are excluded."""
     today = datetime.now(UK_TIMEZONE).date()
-    return today + timedelta(days=5)
+    uk_holidays = holidays.UnitedKingdom()
+    count = 0
+    d = today
+    while count < 5:
+        d += timedelta(days=1)
+        if d.weekday() < 5 and d not in uk_holidays:
+            count += 1
+    return d
 
 
 # Dataset fields — canonical column order for Google Sheets
