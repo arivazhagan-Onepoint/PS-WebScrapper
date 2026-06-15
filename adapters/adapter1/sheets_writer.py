@@ -50,6 +50,7 @@ ROW_COLORS = {
     'amber':      {'red': 1.00, 'green': 0.75, 'blue': 0.00},
     'red':        {'red': 0.90, 'green': 0.20, 'blue': 0.20},
     'yellow':     {'red': 1.00, 'green': 0.95, 'blue': 0.20},
+    'white':      {'red': 1.00, 'green': 1.00, 'blue': 1.00},
 }
 
 
@@ -363,6 +364,16 @@ class SheetsWriter:
         except HttpError as e:
             logger.warning(f"Error loading existing records: {e}")
 
+    def _has_field_changes(self, tender, existing_data):
+        for field, _, _ in CHANGE_FIELDS:
+            if field == 'Bid Qualification':
+                continue
+            old = str(existing_data.get(field, '')).strip()
+            new = str(tender.get(field, '')).strip()
+            if new and old != new:
+                return True
+        return False
+
     def _build_update_comment(self, tender, existing_data, ts, status_reason=''):
         """Generate a change-diff comment or 'no changes' note for an updated record.
         When status_reason is provided it is appended inline to the Status change entry."""
@@ -541,11 +552,16 @@ class SheetsWriter:
                     tender['Created Date'] = existing_data.get('Created Date') or now
                     old_status = str(existing_data.get('Bid Qualification', '')).strip()
                     if old_status == 'NoBid':
-                        # Special transition: NoBid appearing in current run → ReCheck
-                        tender['Bid Qualification'] = 'ReCheck'
-                        tender['Bid Qualification Date'] = today
-                        tender['Bid Qualification Reason'] = ''
-                        logger.info(f"NoBid → ReCheck for OCID {tender_ocid} | Status Date set to {today}")
+                        if self._has_field_changes(tender, existing_data):
+                            tender['Bid Qualification'] = 'ReCheck'
+                            tender['Bid Qualification Date'] = today
+                            tender['Bid Qualification Reason'] = ''
+                            logger.info(f"NoBid → ReCheck (changes detected) for OCID {tender_ocid} | Status Date set to {today}")
+                        else:
+                            tender['Bid Qualification'] = 'NoBid'
+                            tender['Bid Qualification Date'] = existing_data.get('Bid Qualification Date', '')
+                            tender['Bid Qualification Reason'] = existing_data.get('Bid Qualification Reason', '')
+                            logger.info(f"NoBid preserved (no changes) for OCID {tender_ocid}")
                     elif old_status not in SYSTEM_STATUSES:
                         # Other manual overrides: preserve as-is
                         tender['Bid Qualification'] = old_status
@@ -651,6 +667,10 @@ class SheetsWriter:
                         row_color_map[row_num] = ROW_COLORS['light_grey']
                     elif status == 'ReCheck':
                         row_color_map[row_num] = ROW_COLORS['yellow']
+                    elif status == 'NoBid':
+                        row_color_map[row_num] = ROW_COLORS['amber']
+                    elif status == 'Bid':
+                        row_color_map[row_num] = ROW_COLORS['white']
             except HttpError as e:
                 logger.error(f"Error updating existing tenders: {e}")
                 results['errors'] += len(updates)
@@ -664,6 +684,8 @@ class SheetsWriter:
                     row_color_map[row_num] = ROW_COLORS['amber']
                 elif stale_status == 'NoBid':
                     row_color_map[row_num] = ROW_COLORS['red']
+                elif stale_status == 'Bid':
+                    row_color_map[row_num] = ROW_COLORS['white']
 
         # Apply italic + colour formatting to reason text in Comments cells
         self._apply_comment_formatting(new_format_pairs + update_format_pairs)
