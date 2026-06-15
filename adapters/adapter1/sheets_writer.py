@@ -668,7 +668,7 @@ class SheetsWriter:
                     elif status == 'ReCheck':
                         row_color_map[row_num] = ROW_COLORS['yellow']
                     elif status == 'NoBid':
-                        row_color_map[row_num] = ROW_COLORS['amber']
+                        row_color_map[row_num] = ROW_COLORS['red']
                     elif status == 'Bid':
                         row_color_map[row_num] = ROW_COLORS['white']
             except HttpError as e:
