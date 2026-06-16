@@ -17,6 +17,7 @@ _project = json.load(open(os.path.join(BASE_DIR, "project_config.json"), encodin
 
 # Google Sheets
 SCOPES           = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+ENVIRONMENT      = _project["google_sheets"].get("environment", "N/A")
 TARGET_FOLDER_ID = _project["google_sheets"]["target_folder_id"]
 SHEET_NAME       = _project["google_sheets"]["sheet_name"]
 

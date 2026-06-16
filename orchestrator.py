@@ -14,6 +14,20 @@ def load_config():
         return json.load(f)
 
 
+def log_project_config():
+    path = os.path.join(PROJECT_ROOT, 'project_config.json')
+    with open(path, encoding='utf-8') as f:
+        proj = json.load(f)
+    gs = proj.get('google_sheets', {})
+    logger.info("=" * 80)
+    logger.info("PROJECT CONFIGURATION")
+    logger.info("=" * 80)
+    logger.info(f"  Environment     : {gs.get('environment', 'N/A')}")
+    logger.info(f"  Sheet Name      : {gs.get('sheet_name', 'N/A')}")
+    logger.info(f"  Target Folder ID: {gs.get('target_folder_id', 'N/A')}")
+    logger.info("=" * 80)
+
+
 def run_adapter(adapter_cfg):
     adapter_id = adapter_cfg['adapter_id']
     portal = adapter_cfg['portal']
@@ -25,6 +39,7 @@ def run_adapter(adapter_cfg):
 
 
 def main(adapter_filter=None):
+    log_project_config()
     config = load_config()
     adapters = config.get('adapters', [])
 
