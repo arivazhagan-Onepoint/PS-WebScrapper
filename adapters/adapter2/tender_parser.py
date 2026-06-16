@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from .config import UK_TIMEZONE, PORTAL_NAME, ADAPTER_ID, get_due_date_range
+from .config import UK_TIMEZONE, PORTAL_NAME, ADAPTER_ID, get_due_date_range, PLANNING_THRESHOLD, TENDER_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -104,13 +104,13 @@ class TenderParser:
             value_qualifies = True
             reason = "Annual value not available — benefit of the doubt"
         elif 'planning' in stage:
-            value_qualifies = annual_val < 1_000_000
-            threshold = '£1,000,000'
+            value_qualifies = annual_val < PLANNING_THRESHOLD
+            threshold = f'£{PLANNING_THRESHOLD:,.0f}'
             op = '<' if value_qualifies else '>='
             reason = f"Planning stage | Annual value {annual_str} {op} {threshold}"
         elif any(kw in stage for kw in ['tender', 'opportunity']):
-            value_qualifies = annual_val < 139_689
-            threshold = '£139,689'
+            value_qualifies = annual_val < TENDER_THRESHOLD
+            threshold = f'£{TENDER_THRESHOLD:,.0f}'
             op = '<' if value_qualifies else '>='
             reason = f"Tender/Opportunity stage | Annual value {annual_str} {op} {threshold}"
         else:

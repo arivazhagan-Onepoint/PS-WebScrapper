@@ -1,0 +1,108 @@
+{
+  "adapters": [
+    {
+      "s_no": 1,
+      "portal": "Find a Tender Service",
+      "url": "https://www.find-tender.service.gov.uk",
+      "frequency": "daily",
+      "type": "OCDS API",
+      "enabled": true,
+      "adapter_id": "Adapter1",
+      "module": "adapters.adapter1.main",
+      "fts_api": {
+        "api_key": null
+      },
+      "filters": {
+        "suitable_for_smes": true,
+        "excluded_statuses": ["complete", "cancelled", "withdrawn"],
+        "excluded_tags": ["award", "contract", "awardUpdate", "contractTermination", "implementation"],
+        "included_countries": ["United Kingdom"],
+        "cpv_codes": [
+          "48000000",
+          "72000000",
+          "72100000",
+          "72200000",
+          "72300000",
+          "72400000",
+          "72500000",
+          "72600000",
+          "72700000",
+          "72800000",
+          "72900000"
+        ],
+        "keywords": [
+          "Artificial Intelligence", "GenAI", "LLM", "Agentic Architecture", "Machine Learning", "MLOps",
+          "Robotic Process Automation", "RPA", "Responsible AI",
+          "Data Integration", "Data Governance", "Data Architecture", "Master Data Management", "MDM",
+          "Data Quality", "Data Wellness", "Geospatial Analytics",
+          "Cloud Migration", "Architecture Modernisation", "Hybrid Cloud", "Azure", "AWS", "GCP", "DevSecOps", "SaaS", "iSaaS",
+          "Boomi", "MuleSoft", "Talend", "API Management", "Middleware",
+          "Proof of Value", "PoV", "Rapid Prototyping", "Discovery Phase", "Valuepath", "Agile Delivery", "De-risking",
+          "SME", "Ethnic Minority Business", "EMB", "Social Value", "Net Zero", "Living Wage", "Disability Confident",
+          "S1000D", "Defence", "Aerospace", "Healthcare", "Data", "Digital", "Personalisation",
+          "Clinical Information", "Public Sector Transformation"
+        ]
+      },
+      "date_windows": {
+        "publication_lookback_days": 5,
+        "due_date_min_working_days": 5
+      },
+      "qualification_thresholds": {
+        "planning_stage_max_annual_value": 1000000,
+        "tender_stage_max_annual_value": 139689
+      }
+    },
+    {
+      "s_no": 2,
+      "portal": "Contracts Finder Service",
+      "url": "https://www.contractsfinder.service.gov.uk/",
+      "frequency": "daily",
+      "type": "OCDS API",
+      "enabled": true,
+      "adapter_id": "Adapter2",
+      "module": "adapters.adapter2.main",
+      "fts_api": {
+        "api_key": null
+      },
+      "filters": {
+        "suitable_for_smes": true,
+        "excluded_statuses": ["complete", "cancelled", "withdrawn"],
+        "excluded_tags": ["award", "contract", "awardUpdate", "contractTermination", "implementation"],
+        "included_countries": [],
+        "cpv_codes": [
+          "48000000",
+          "72000000",
+          "72100000",
+          "72200000",
+          "72300000",
+          "72400000",
+          "72500000",
+          "72600000",
+          "72700000",
+          "72800000",
+          "72900000"
+        ],
+        "keywords": [
+          "Artificial Intelligence", "GenAI", "LLM", "Agentic Architecture", "Machine Learning", "MLOps",
+          "Robotic Process Automation", "RPA", "Responsible AI",
+          "Data Integration", "Data Governance", "Data Architecture", "Master Data Management", "MDM",
+          "Data Quality", "Data Wellness", "Geospatial Analytics",
+          "Cloud Migration", "Architecture Modernisation", "Hybrid Cloud", "Azure", "AWS", "GCP", "DevSecOps", "SaaS", "iSaaS",
+          "Boomi", "MuleSoft", "Talend", "API Management", "Middleware",
+          "Proof of Value", "PoV", "Rapid Prototyping", "Discovery Phase", "Valuepath", "Agile Delivery", "De-risking",
+          "SME", "Ethnic Minority Business", "EMB", "Social Value", "Net Zero", "Living Wage", "Disability Confident",
+          "S1000D", "Defence", "Aerospace", "Healthcare", "Data", "Digital", "Personalisation",
+          "Clinical Information", "Public Sector Transformation"
+        ]
+      },
+      "date_windows": {
+        "publication_lookback_days": 5,
+        "due_date_min_working_days": 5
+      },
+      "qualification_thresholds": {
+        "planning_stage_max_annual_value": 1000000,
+        "tender_stage_max_annual_value": 139689
+      }
+    }
+  ]
+}

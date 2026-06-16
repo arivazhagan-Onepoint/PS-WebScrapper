@@ -10,7 +10,7 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def load_config():
-    with open(os.path.join(PROJECT_ROOT, 'config.json'), encoding='utf-8') as f:
+    with open(os.path.join(PROJECT_ROOT, 'adapter_config.json'), encoding='utf-8') as f:
         return json.load(f)
 
 
@@ -29,7 +29,7 @@ def main(adapter_filter=None):
     adapters = config.get('adapters', [])
 
     if not adapters:
-        logger.warning("No adapters configured in config.json")
+        logger.warning("No adapters configured in adapter_config.json")
         return
 
     for adapter in adapters:
