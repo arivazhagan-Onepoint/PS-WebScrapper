@@ -6,7 +6,7 @@ import time
 import requests
 from .config import (
     CF_API_BASE, PORTAL_URL, PORTAL_NAME,
-    CPV_CODES, SUITABLE_FOR_SMES, EXCLUDED_STATUSES, EXCLUDED_TAGS, INCLUDED_COUNTRIES, KEYWORDS,
+    CPV_CODES, SUITABLE_FOR_SMES, EXCLUDED_STATUSES, EXCLUDED_TAGS, INCLUDED_COUNTRIES, KEYWORDS, KEYWORD_RE,
     get_publication_date_range, get_due_date_range, UK_TIMEZONE, BASE_DIR
 )
 from datetime import datetime
@@ -98,13 +98,13 @@ class TenderScraper:
         return releases
 
     def matches_keyword(self, release):
-        """Return True if any keyword appears in the title or description."""
+        """Return True if any keyword appears as a whole word in the title or description."""
         tender = release.get('tender', {})
         text = ' '.join(filter(None, [
             tender.get('title', ''),
             tender.get('description', ''),
-        ])).lower()
-        return any(kw.lower() in text for kw in KEYWORDS)
+        ]))
+        return bool(KEYWORD_RE.search(text))
 
     def matches_cpv(self, release):
         """Return True if any CPV code in the release matches any of the configured CPV_CODES prefixes."""

@@ -1,5 +1,6 @@
 import os
 import json
+import re
 
 # All shared configuration (DATASET_FIELDS, Google Sheet settings, etc.)
 # lives in the root config.py. This shim re-exports everything from there
@@ -33,6 +34,10 @@ EXCLUDED_STATUSES  = _cfg['filters']['excluded_statuses']
 EXCLUDED_TAGS      = set(_cfg['filters']['excluded_tags'])
 INCLUDED_COUNTRIES = _cfg['filters']['included_countries']
 KEYWORDS           = _cfg['filters']['keywords']
+KEYWORD_RE         = re.compile(
+    '|'.join(r'\b' + re.escape(kw) + r'\b' for kw in KEYWORDS),
+    re.IGNORECASE
+)
 
 # Qualification thresholds
 PLANNING_THRESHOLD = _cfg['qualification_thresholds']['planning_stage_max_annual_value']
