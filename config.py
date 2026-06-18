@@ -5,10 +5,9 @@ import pytz
 import holidays
 
 # Paths
-BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
-CREDENTIALS_DIR = os.path.join(BASE_DIR, "credentials")
-TOKEN_PATH      = os.path.join(CREDENTIALS_DIR, "ps_tender_token.json")
-CREDENTIALS_FILE = os.path.join(CREDENTIALS_DIR, "credentials.json")
+BASE_DIR             = os.path.dirname(os.path.abspath(__file__))
+CREDENTIALS_DIR      = os.path.join(BASE_DIR, "credentials")
+SERVICE_ACCOUNT_FILE = os.path.join(CREDENTIALS_DIR, "service_account.json")
 
 os.makedirs(CREDENTIALS_DIR, exist_ok=True)
 
