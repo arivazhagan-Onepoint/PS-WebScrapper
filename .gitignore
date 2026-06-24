@@ -20,4 +20,5 @@ __pycache__/
 .claude/settings.local.json
 
 #Project specific configuration files to be exluded 
-*project_config*.json
+project_config*.json
+project_config.json
