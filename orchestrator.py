@@ -1,8 +1,10 @@
+import argparse
 import importlib
 import json
 import logging
 import os
 import sys
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +30,19 @@ def log_project_config():
     logger.info("=" * 80)
 
 
-def run_adapter(adapter_cfg):
+def run_adapter(adapter_cfg, target_date=None):
     adapter_id = adapter_cfg['adapter_id']
     portal = adapter_cfg['portal']
     logger.info(f"{'=' * 80}")
     logger.info(f"Adapter: {adapter_id} | Portal: {portal} | Type: {adapter_cfg['type']} | Freq: {adapter_cfg['frequency']}")
     logger.info(f"{'=' * 80}")
     module = importlib.import_module(adapter_cfg['module'])
-    module.main()
+    module.main(target_date=target_date)
 
 
-def main(adapter_filter=None):
+def main(adapter_filter=None, target_date=None):
     log_project_config()
+    logger.info(f"Publication anchor date: {target_date or 'today (default)'}")
     config = load_config()
     adapters = config.get('adapters', [])
 
@@ -53,7 +56,7 @@ def main(adapter_filter=None):
             continue
         if adapter_filter and adapter['adapter_id'] != adapter_filter:
             continue
-        run_adapter(adapter)
+        run_adapter(adapter, target_date=target_date)
 
 
 if __name__ == '__main__':
@@ -62,7 +65,22 @@ if __name__ == '__main__':
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[logging.StreamHandler(sys.stdout)]
     )
-    # Optional: pass adapter_id as argument to run a single adapter
-    # e.g. python orchestrator.py adapter1
-    adapter_filter = sys.argv[1] if len(sys.argv) > 1 else None
-    main(adapter_filter)
+    parser = argparse.ArgumentParser(description="PS Tender Tracker orchestrator")
+    parser.add_argument(
+        'adapter', nargs='?', default=None,
+        help="Optional adapter_id to run a single adapter (e.g. Adapter1)"
+    )
+    parser.add_argument(
+        '--date', dest='date', default=None,
+        help="Publication anchor date as YYYY-MM-DD; defaults to today"
+    )
+    args = parser.parse_args()
+
+    target_date = None
+    if args.date:
+        try:
+            target_date = datetime.strptime(args.date, '%Y-%m-%d').date()
+        except ValueError:
+            parser.error(f"Invalid --date '{args.date}'. Expected format YYYY-MM-DD.")
+
+    main(adapter_filter=args.adapter, target_date=target_date)

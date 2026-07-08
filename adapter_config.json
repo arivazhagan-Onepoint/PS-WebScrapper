@@ -51,7 +51,7 @@
         ]
       },
       "date_windows": {
-        "publication_lookback_days": 5,
+        "publication_lookback_days": 1,
         "due_date_min_working_days": 5
       },
       "qualification_thresholds": {
@@ -110,7 +110,7 @@
         ]
       },
       "date_windows": {
-        "publication_lookback_days": 5,
+        "publication_lookback_days": 1,
         "due_date_min_working_days": 5
       },
       "qualification_thresholds": {

@@ -48,8 +48,8 @@ _pub_days  = _cfg['date_windows']['publication_lookback_days']
 _due_days  = _cfg['date_windows']['due_date_min_working_days']
 
 
-def get_publication_date_range():
-    today = datetime.now(UK_TIMEZONE).date()
+def get_publication_date_range(reference_date=None):
+    today = reference_date or datetime.now(UK_TIMEZONE).date()
     return today - timedelta(days=_pub_days), today
 
 

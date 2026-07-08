@@ -12,8 +12,12 @@ from .config import LOG_FILE, LOG_FORMAT, BASE_DIR, UK_TIMEZONE, ADAPTER_ID
 logger = logging.getLogger(__name__)
 
 
-def main():
-    """Main orchestration function."""
+def main(target_date=None):
+    """Main orchestration function.
+
+    target_date (optional date) anchors the publication window; defaults to
+    today when None.
+    """
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
@@ -40,7 +44,7 @@ def main():
 
         # Step 2: Scrape tender listings
         logger.info("\n[2/6] Scraping tender listings...")
-        tender_summaries = scraper.scrape(run_ts=run_ts)
+        tender_summaries = scraper.scrape(run_ts=run_ts, target_date=target_date)
 
         if not tender_summaries:
             logger.warning("No tenders found matching criteria")

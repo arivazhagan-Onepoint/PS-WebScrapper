@@ -12,8 +12,12 @@ from .config import LOG_FILE, LOG_FORMAT, BASE_DIR, UK_TIMEZONE, ADAPTER_ID
 logger = logging.getLogger(__name__)
 
 
-def main():
-    """Main orchestration function."""
+def main(target_date=None):
+    """Main orchestration function.
+
+    target_date (optional date) anchors the publication window; defaults to
+    today when None.
+    """
     # Reconfigure stdout to UTF-8 so non-ASCII characters in tender titles
     # don't cause UnicodeEncodeError on Windows consoles (default cp1252).
     if hasattr(sys.stdout, 'reconfigure'):
@@ -42,7 +46,7 @@ def main():
 
         # Step 2: Scrape tender listings
         logger.info("\n[2/6] Scraping tender listings...")
-        tender_summaries = scraper.scrape(run_ts=run_ts)
+        tender_summaries = scraper.scrape(run_ts=run_ts, target_date=target_date)
 
         if not tender_summaries:
             logger.warning("No tenders found matching criteria")

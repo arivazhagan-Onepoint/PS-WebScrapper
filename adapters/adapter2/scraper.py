@@ -174,10 +174,14 @@ class TenderScraper:
         uuid_part = '-'.join(parts[:5]) if len(parts) > 5 else notice_id
         return f"{PORTAL_URL}/{uuid_part}"
 
-    def scrape(self, run_ts):
-        """Fetch and filter tenders from the Contracts Finder OCDS API."""
+    def scrape(self, run_ts, target_date=None):
+        """Fetch and filter tenders from the Contracts Finder OCDS API.
+
+        target_date (optional date) anchors the publication window; defaults to
+        today when None. The due-date logic is unaffected.
+        """
         self._scrape_ts = datetime.fromisoformat(run_ts).strftime('%Y%m%d_%H%M%S')
-        pub_start, pub_end = get_publication_date_range()
+        pub_start, pub_end = get_publication_date_range(target_date)
         due_start = get_due_date_range()
 
         logger.info("Search parameters:")
@@ -232,10 +236,10 @@ class TenderScraper:
                 logger.debug(f"  [SKIP-CPV]        {notice_id} | {title}")
                 continue
 
-            if not self.matches_keyword(release):
-                filter_counts['keyword'] += 1
-                logger.debug(f"  [SKIP-KEYWORD]    {notice_id} | {title}")
-                continue
+            # if not self.matches_keyword(release):
+            #     filter_counts['keyword'] += 1
+            #     logger.debug(f"  [SKIP-KEYWORD]    {notice_id} | {title}")
+            #     continue
 
             if direct_url in seen_urls:
                 filter_counts['duplicate'] += 1
