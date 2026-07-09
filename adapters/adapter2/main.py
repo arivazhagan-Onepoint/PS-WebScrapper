@@ -48,7 +48,8 @@ def main(target_date=None):
 
         if not tender_summaries:
             logger.warning("No tenders found matching criteria")
-            return
+            return {'adapter_id': ADAPTER_ID, 'found': 0, 'parsed': 0,
+                    'written': 0, 'updated': 0, 'errors': 0}
 
         logger.info(f"Found {len(tender_summaries)} tenders")
 
@@ -99,7 +100,7 @@ def main(target_date=None):
         for tender in detailed_tenders:
             status, reason = parser.qualify_tender(tender)
             tender['Bid Qualification'] = status
-            tender['Bid Qualification Reason'] = reason if status == 'NotQualified' else ''
+            tender['Bid Qualification Reason(System)'] = reason if status == 'NotQualified' else ''
             ts = datetime.fromisoformat(run_ts).strftime('%Y-%m-%d %H:%M')
             tender['_qualify_comment'] = f"[{ts}] Bid Qualification: {status} | {reason}"
             if status == 'PreQualified':
@@ -137,6 +138,10 @@ def main(target_date=None):
         logger.info(f"JSON file: {json_path}")
         logger.info("=" * 80 + "\n")
 
+        return {'adapter_id': ADAPTER_ID, 'found': len(tender_summaries),
+                'parsed': len(detailed_tenders), 'written': results['written'],
+                'updated': results['updated'], 'errors': results['errors']}
+
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
-        sys.exit(1)
+        raise

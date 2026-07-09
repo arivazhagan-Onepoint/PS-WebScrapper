@@ -364,6 +364,23 @@ class SheetsWriter:
         except HttpError as e:
             logger.warning(f"Error loading existing records: {e}")
 
+    def _accumulate_system_reason(self, prev, new_reason, ts):
+        """Append a timestamped system reason to the running log, retaining all
+        prior entries. A blank new reason leaves the log untouched; a reason
+        identical to the most recent entry is skipped to avoid duplicate lines
+        on repeated runs."""
+        prev = prev or ''
+        new_reason = (new_reason or '').strip()
+        if not new_reason:
+            return prev
+        if prev:
+            first_line = prev.strip().split('\n')[0]
+            last_reason = re.sub(r'^\[.*?\]\s*', '', first_line).strip()
+            if last_reason == new_reason:
+                return prev
+        entry = f"[{ts}] {new_reason}"
+        return (entry + '\n' + prev) if prev else entry
+
     def _has_field_changes(self, tender, existing_data):
         for field, _, _ in CHANGE_FIELDS:
             if field == 'Bid Qualification':
@@ -551,32 +568,38 @@ class SheetsWriter:
                     existing_data = self.existing_row_data.get(existing_row, {})
                     tender['Created Date'] = existing_data.get('Created Date') or now
                     old_status = str(existing_data.get('Bid Qualification', '')).strip()
-                    if old_status == 'NoBid':
+                    if old_status.startswith('NoBid'):
                         if self._has_field_changes(tender, existing_data):
                             tender['Bid Qualification'] = 'ReCheck'
                             tender['Bid Qualification Date'] = today
-                            prev_reason = existing_data.get('Bid Qualification Reason', '')
-                            tender['Bid Qualification Reason'] = f"Previous status: NoBid | {prev_reason}" if prev_reason else "Previous status: NoBid"
+                            system_reason_to_add = f'Previous status: {old_status}'
                             logger.info(f"NoBid → ReCheck (changes detected) for OCID {tender_ocid} | Status Date set to {today}")
                         else:
-                            tender['Bid Qualification'] = 'NoBid'
+                            tender['Bid Qualification'] = old_status
                             tender['Bid Qualification Date'] = existing_data.get('Bid Qualification Date', '')
-                            tender['Bid Qualification Reason'] = existing_data.get('Bid Qualification Reason', '')
+                            system_reason_to_add = ''
                             logger.info(f"NoBid preserved (no changes) for OCID {tender_ocid}")
                     elif old_status not in SYSTEM_STATUSES:
                         # Other manual overrides: preserve as-is
                         tender['Bid Qualification'] = old_status
                         tender['Bid Qualification Date'] = existing_data.get('Bid Qualification Date', '')
-                        tender['Bid Qualification Reason'] = existing_data.get('Bid Qualification Reason', '')
+                        system_reason_to_add = ''
                         logger.info(f"Preserving manual status '{old_status}' for OCID {tender_ocid} - qualification not applied")
                     else:
                         # System status — apply qualification and stamp Status Date on change
                         new_status = str(tender.get('Bid Qualification', '')).strip()
+                        system_reason_to_add = str(tender.get('Bid Qualification Reason(System)', '')).strip()
                         if new_status and new_status != old_status:
                             tender['Bid Qualification Date'] = today
                             logger.info(f"Status changed for OCID {tender_ocid}: '{old_status}' -> '{new_status}' | Status Date set to {today}")
                         else:
                             tender['Bid Qualification Date'] = existing_data.get('Bid Qualification Date', '')
+                    # Retain reason history across runs: accumulate the system log,
+                    # carry the human-entered column forward untouched.
+                    tender['Bid Qualification Reason(System)'] = self._accumulate_system_reason(
+                        existing_data.get('Bid Qualification Reason(System)', ''),
+                        system_reason_to_add, ts)
+                    tender['Bid Qualification Reason(Human)'] = existing_data.get('Bid Qualification Reason(Human)', '')
                     # Build comments: existing sheet comments + change diff (reason inlined on status change)
                     status_reason = qualify_comment.split(' | ', 1)[-1] if qualify_comment else ''
                     diff = self._build_update_comment(tender, existing_data, ts, status_reason)
@@ -592,6 +615,11 @@ class SheetsWriter:
                     # New record: append qualify comment to first-scraped + SC check comments
                     prior = tender.get('Comments', '')
                     tender['Comments'] = (prior + '\n' + qualify_comment) if prior else qualify_comment
+                    # Start the system reason log with a timestamped first entry
+                    first_reason = str(tender.get('Bid Qualification Reason(System)', '')).strip()
+                    if first_reason:
+                        ts_new = datetime.fromisoformat(now).strftime('%Y-%m-%d %H:%M')
+                        tender['Bid Qualification Reason(System)'] = f"[{ts_new}] {first_reason}"
                     # Stamp Bid Qualification Date, Created Date, and Last Modified Date
                     tender['Bid Qualification Date'] = today
                     tender['Last Modified Date'] = now
@@ -668,10 +696,12 @@ class SheetsWriter:
                         row_color_map[row_num] = ROW_COLORS['light_grey']
                     elif status == 'ReCheck':
                         row_color_map[row_num] = ROW_COLORS['yellow']
-                    elif status == 'NoBid':
+                    elif status.startswith('NoBid'):
                         row_color_map[row_num] = ROW_COLORS['red']
-                    elif status == 'Bid':
+                    elif status.startswith('Bid'):
                         row_color_map[row_num] = ROW_COLORS['white']
+                    elif status.startswith('TBD'):
+                        row_color_map[row_num] = ROW_COLORS['yellow']
             except HttpError as e:
                 logger.error(f"Error updating existing tenders: {e}")
                 results['errors'] += len(updates)
@@ -683,10 +713,12 @@ class SheetsWriter:
                 stale_status = self.existing_row_data.get(row_num, {}).get('Bid Qualification', '')
                 if stale_status == 'PreQualified':
                     row_color_map[row_num] = ROW_COLORS['amber']
-                elif stale_status == 'NoBid':
+                elif stale_status.startswith('NoBid'):
                     row_color_map[row_num] = ROW_COLORS['red']
-                elif stale_status == 'Bid':
+                elif stale_status.startswith('Bid'):
                     row_color_map[row_num] = ROW_COLORS['white']
+                elif stale_status.startswith('TBD'):
+                    row_color_map[row_num] = ROW_COLORS['yellow']
 
         # Apply italic + colour formatting to reason text in Comments cells
         self._apply_comment_formatting(new_format_pairs + update_format_pairs)
