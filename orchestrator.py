@@ -55,13 +55,13 @@ def _build_report(outcomes, started_at, finished_at, anchor_date, environment='N
     with_errors = [o for o in outcomes if o['status'] == 'success' and o['stats'].get('errors', 0)]
 
     if failed:
-        subject = f"❌ PS WebScrapper Tool [{environment}] — {anchor_date} — FAILURE ({len(failed)} of {ran} adapter(s) failed)"
+        subject = f"❌ PS WebScrapper [{environment}] — {anchor_date} — FAILURE ({len(failed)} of {ran} adapter(s) failed)"
         banner_bg = '#c0392b'
     elif with_errors:
-        subject = f"⚠️ PS WebScrapper Tool [{environment}] — {anchor_date} — COMPLETED WITH ERRORS ({ran}/{ran} adapters)"
+        subject = f"⚠️ PS WebScrapper [{environment}] — {anchor_date} — COMPLETED WITH ERRORS ({ran}/{ran} adapters)"
         banner_bg = '#e67e22'
     else:
-        subject = f"✅ PS WebScrapper Tool [{environment}] — {anchor_date} — SUCCESS ({ran}/{ran} adapters)"
+        subject = f"✅ PS WebScrapper [{environment}] — {anchor_date} — SUCCESS ({ran}/{ran} adapters)"
         banner_bg = '#27ae60'
 
     rows = []
