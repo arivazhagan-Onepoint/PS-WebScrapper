@@ -140,7 +140,8 @@ def main(target_date=None):
 
         return {'adapter_id': ADAPTER_ID, 'found': len(tender_summaries),
                 'parsed': len(detailed_tenders), 'written': results['written'],
-                'updated': results['updated'], 'errors': results['errors']}
+                'updated': results['updated'], 'errors': results['errors'],
+                'sheet_id': sheet_id}
 
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)

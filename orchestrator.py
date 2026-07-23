@@ -7,7 +7,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from config import UK_TIMEZONE
+from config import UK_TIMEZONE, SHEET_NAME
 from notifier import send_alert
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,16 @@ def _build_report(outcomes, started_at, finished_at, anchor_date, environment='N
     if not rows:
         rows.append("<tr><td colspan='6'>No adapters ran.</td></tr>")
 
+    # Link to the Google Sheet the adapters wrote to. All adapters share the
+    # same spreadsheet (matched by folder + name), so any outcome's sheet_id works.
+    sheet_id = next((o['stats'].get('sheet_id') for o in outcomes
+                     if o['status'] == 'success' and o['stats'].get('sheet_id')), None)
+    sheet_link = ""
+    if sheet_id:
+        sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/edit"
+        sheet_link = (f'<p><b>Sheet:</b> '
+                      f'<a href="{sheet_url}">{SHEET_NAME}</a></p>')
+
     failure_details = ""
     for o in failed:
         failure_details += (
@@ -101,6 +111,7 @@ def _build_report(outcomes, started_at, finished_at, anchor_date, environment='N
      <b>Started:</b> {started_at}<br>
      <b>Finished:</b> {finished_at}<br>
      <b>Publication anchor date:</b> {anchor_date}{' (today, default)' if anchor_is_default else ''}</p>
+  {sheet_link}
   <table cellpadding="8" cellspacing="0" border="1"
          style="border-collapse:collapse;border-color:#ddd;font-size:14px">
     <tr style="background:#f0f0f0">
